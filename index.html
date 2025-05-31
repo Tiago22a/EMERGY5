@@ -6,6 +6,7 @@
   <title>EMERGY5 | Agência de Marketing</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./style.css">
   <style>
     :root {
       --purple-dark: #3b0764;
@@ -21,26 +22,48 @@
 <body class="bg-gray-light text-gray-dark font-[Inter]">
 
   <!-- Hero Section -->
-  <section class="min-h-screen flex flex-col justify-center items-center text-center px-6 h-screen bg-gradient-to-br from-purple-light via-purple-base to-purple-dark text-gray-900 relative">
-    <!-- Header -->
-    <header class="absolute top-0 left-0 w-full flex justify-between items-center px-6 sm:px-10 py-4 z-50 bg-transparent text-gray-900">
-      <img src="./emergy-5-prototype 9.png" alt="Logo EMERGY5" class="h-16" />
-      <a href="https://wa.me/5561991585340" class="text-green-accent rounded-xl bg-white font-semibold p-4 hover:bg-gray-100 transition">
-        Fale conosco
-      </a>
-    </header>
+<!-- Hero Section -->
+<section class="min-h-screen flex flex-col justify-center h-screen bg-gradient-to-br from-purple-light via-purple-base to-purple-dark text-gray-900 relative px-6">
+  <!-- Header -->
+  <header class="absolute top-0 left-0 w-full flex justify-between items-center px-6 sm:px-10 py-4 z-50 bg-transparent text-gray-900">
+    <img src="./emergy-5-prototype 9.png" alt="Logo EMERGY5" class="h-16" />
+    <a href="https://wa.me/5561991585340" class="text-green-accent rounded-xl bg-white font-semibold p-4 hover:bg-gray-100 transition">
+      Fale conosco
+    </a>
+  </header>
 
-    <h1 class="text-3xl sm:text-5xl font-extrabold mb-6 leading-tight max-w-4xl px-4">
+  <!-- Conteúdo principal com imagem -->
+ <!-- Conteúdo principal com imagem -->
+<div class="flex flex-col-reverse lg:flex-row items-center justify-between w-full max-w-7xl mx-auto px-4 sm:px-6">
+  <!-- Texto à esquerda -->
+  <div class="w-full lg:w-1/2 text-center lg:text-left mt-10 lg:mt-0">
+    <h1 class="text-3xl sm:text-5xl font-extrabold mb-6 leading-tight max-w-4xl mx-auto lg:mx-0">
       EMERGY5 | OU SUA MARCA VENDE, OU VIRA PAISAGEM NO DIGITAL.
     </h1>
-    <p class="text-lg max-w-2xl mx-auto mb-2 px-4">📍 Atendemos 100% online — para todo o Brasil.</p>
-    <p class="text-xl font-semibold max-w-3xl mx-auto mb-8 px-4">
+    <p class="text-lg max-w-2xl mb-2 mx-auto lg:mx-0">
+      📍 Atendemos 100% online — para todo o Brasil.
+    </p>
+    <p class="text-xl font-semibold max-w-3xl mb-8 mx-auto lg:mx-0">
       🚨 Se você quer fazer sua marca vender, captar leads todos os dias e crescer com estratégia de verdade, essa é a última página que você precisa abrir.
     </p>
     <a href="#formulario" class="inline-block bg-red-600 text-white font-semibold py-4 px-8 rounded-full shadow-lg hover:bg-red-700 transition">
       Quero uma análise gratuita
     </a>
-  </section>
+  </div>
+
+  <!-- Imagem à direita -->
+  <div class="w-full lg:w-1/2 flex justify-center lg:justify-end mb-10 lg:mb-0">
+    <img 
+      src="./hero-img.png" 
+      alt="Ilustração de marketing" 
+      class="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-[600px] h-auto object-contain"
+    />
+  </div>
+</div>
+
+</section>
+
+
 
   <!-- Problemas -->
   <section class="py-20 bg-gray-100 px-6 text-gray-dark">
