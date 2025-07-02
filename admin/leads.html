@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Leads - Emergy5</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
+
+  <!-- Bibliotecas para exportação -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-8 max-w-6xl mx-auto relative font-sans">
+
+ <header class="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow z-50">
+  <div class="max-w-6xl mx-auto flex justify-between items-center px-4 py-3">
+    <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">Leads Recebidos</h1>
+    <div class="flex gap-3">
+      <button id="backBtn"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Voltar
+      </button>
+      <button id="exportBtn"
+        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+        Exportar
+      </button>
+      <button id="logoutBtn"
+        class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+        Sair
+      </button>
+    </div>
+  </div>
+</header>
+
+<br><br>
+
+<h2 class="text-3xl font-bold mb-4 text-center">Leads Recebidos</h2>
+
+<!-- Campo de busca -->
+<div class="mb-6 text-center">
+  <input id="searchInput" type="text" placeholder="Buscar por nome, email ou telefone"
+    class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 w-full max-w-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-white">
+</div>
+
+<div class="overflow-x-auto">
+  <table id="leadsTable" class="min-w-full border border-gray-300 dark:border-gray-700 rounded-lg shadow bg-white dark:bg-gray-800 text-sm"></table>
+
+  <!-- Paginação -->
+  <div class="flex justify-between items-center mt-4 text-sm">
+    <button id="prevPage" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50" disabled>Anterior</button>
+    <span id="pageInfo" class="text-gray-700 dark:text-gray-300"></span>
+    <button id="nextPage" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">Próxima</button>
+  </div>
+</div>
+
+<!-- Modal Exportação -->
+<div id="exportModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-80 shadow-lg space-y-4 text-center">
+    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Exportar como:</h3>
+    <div class="flex justify-center gap-4">
+      <button id="exportPdf" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded">PDF</button>
+      <button id="exportExcel" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded">Excel</button>
+    </div>
+    <button id="closeModal" class="mt-4 text-gray-600 dark:text-gray-300 hover:underline text-sm">Cancelar</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAzuAWnx-hHZ8WQNjU_2iY40i32_aqOF6I",
+    authDomain: "emergy-41abe.firebaseapp.com",
+    projectId: "emergy-41abe",
+    storageBucket: "emergy-41abe.firebasestorage.app",
+    messagingSenderId: "105318588888",
+    appId: "1:105318588888:web:f814971e9ff8453c38d2ad"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  let todosLeads = [];
+  let leadsFiltrados = [];
+  let paginaAtual = 1;
+  const porPagina = 10;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const logoutBtn = document.getElementById('logoutBtn');
+    const backBtn = document.getElementById('backBtn');
+    const searchInput = document.getElementById('searchInput');
+    const leadsTable = document.getElementById('leadsTable');
+
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const pageInfo = document.getElementById('pageInfo');
+
+    // Modal e botões exportação
+    const exportBtn = document.getElementById('exportBtn');
+    const exportModal = document.getElementById('exportModal');
+    const closeModalBtn = document.getElementById('closeModal');
+    const exportPdfBtn = document.getElementById('exportPdf');
+    const exportExcelBtn = document.getElementById('exportExcel');
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = 'login.html';
+      } else {
+        carregarLeads();
+      }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      signOut(auth).then(() => window.location.href = 'login.html');
+    });
+
+    backBtn.addEventListener('click', () => {
+      window.location.href = 'admin.html';
+    });
+
+    searchInput.addEventListener('input', () => {
+      filtrarLeads(searchInput.value);
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (paginaAtual > 1) {
+        paginaAtual--;
+        atualizarTabela();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if ((paginaAtual * porPagina) < leadsFiltrados.length) {
+        paginaAtual++;
+        atualizarTabela();
+      }
+    });
+
+    exportBtn.addEventListener('click', () => {
+      exportModal.classList.remove('hidden');
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+      exportModal.classList.add('hidden');
+    });
+
+    exportPdfBtn.addEventListener('click', () => {
+      exportModal.classList.add('hidden');
+      exportToPDF(leadsFiltrados);
+    });
+
+    exportExcelBtn.addEventListener('click', () => {
+      exportModal.classList.add('hidden');
+      exportToExcel(leadsFiltrados);
+    });
+
+    async function carregarLeads() {
+      const snapshot = await getDocs(collection(db, "leads"));
+      todosLeads = snapshot.docs.map(doc => doc.data());
+      leadsFiltrados = [...todosLeads];
+      atualizarTabela();
+    }
+
+    function filtrarLeads(termo) {
+      termo = termo.toLowerCase();
+      leadsFiltrados = todosLeads.filter(l =>
+        l.nome.toLowerCase().includes(termo) ||
+        l.email.toLowerCase().includes(termo) ||
+        l.telefone.toLowerCase().includes(termo)
+      );
+      paginaAtual = 1;
+      atualizarTabela();
+    }
+
+    function atualizarTabela() {
+      const inicio = (paginaAtual - 1) * porPagina;
+      const fim = inicio + porPagina;
+      const paginaLeads = leadsFiltrados.slice(inicio, fim);
+
+      renderTabela(paginaLeads);
+      pageInfo.textContent = `Página ${paginaAtual} de ${Math.ceil(leadsFiltrados.length / porPagina)}`;
+      prevBtn.disabled = paginaAtual === 1;
+      nextBtn.disabled = fim >= leadsFiltrados.length;
+    }
+
+    function renderTabela(leads) {
+      let html = `
+        <thead class="bg-blue-600 dark:bg-blue-700 text-white">
+          <tr>
+            <th class="p-3 border border-gray-300 dark:border-gray-600 text-left">Nome</th>
+            <th class="p-3 border border-gray-300 dark:border-gray-600 text-left">Email</th>
+            <th class="p-3 border border-gray-300 dark:border-gray-600 text-left">Telefone</th>
+            <th class="p-3 border border-gray-300 dark:border-gray-600 text-left">Empresa</th>
+            <th class="p-3 border border-gray-300 dark:border-gray-600 text-left">Faturamento</th>
+            <th class="p-3 border border-gray-300 dark:border-gray-600 text-left">Mensagem</th>
+            <th class="p-3 border border-gray-300 dark:border-gray-600 text-left">Data</th>
+          </tr>
+        </thead>
+        <tbody>
+      `;
+      leads.forEach(data => {
+        html += `
+          <tr class="hover:bg-gray-100 dark:hover:bg-gray-700 even:bg-white odd:bg-gray-50 dark:even:bg-gray-800 dark:odd:bg-gray-900">
+            <td class="p-2 border border-gray-300 dark:border-gray-600">${data.nome}</td>
+            <td class="p-2 border border-gray-300 dark:border-gray-600">${data.email}</td>
+            <td class="p-2 border border-gray-300 dark:border-gray-600">${data.telefone}</td>
+            <td class="p-2 border border-gray-300 dark:border-gray-600">${data.empresa}</td>
+            <td class="p-2 border border-gray-300 dark:border-gray-600">${data.faturamento}</td>
+            <td class="p-2 border border-gray-300 dark:border-gray-600">${data.mensagem || "-"}</td>
+            <td class="p-2 border border-gray-300 dark:border-gray-600">${new Date(data.dataEnvio).toLocaleString()}</td>
+          </tr>
+        `;
+      });
+      html += "</tbody>";
+      leadsTable.innerHTML = html;
+    }
+
+    function exportToPDF(leads) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(18);
+      doc.text("Leads Exportados", 14, 22);
+
+      const colHeaders = ["Nome", "Email", "Telefone", "Empresa", "Faturamento", "Mensagem", "Data"];
+      const rows = leads.map(l => [
+        l.nome,
+        l.email,
+        l.telefone,
+        l.empresa,
+        l.faturamento,
+        l.mensagem || "-",
+        new Date(l.dataEnvio).toLocaleString()
+      ]);
+
+      doc.autoTable({
+        head: [colHeaders],
+        body: rows,
+        startY: 30,
+        theme: 'grid',
+      });
+
+      doc.save("leads.pdf");
+    }
+
+    function exportToExcel(leads) {
+      const wb = XLSX.utils.book_new();
+      const wsData = [
+        ["Nome", "Email", "Telefone", "Empresa", "Faturamento", "Mensagem", "Data"],
+        ...leads.map(l => [
+          l.nome,
+          l.email,
+          l.telefone,
+          l.empresa,
+          l.faturamento,
+          l.mensagem || "-",
+          new Date(l.dataEnvio).toLocaleString()
+        ])
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      XLSX.utils.book_append_sheet(wb, ws, "Leads");
+      XLSX.writeFile(wb, "leads.xlsx");
+    }
+
+  });
+</script>
+
+</body>
+</html>

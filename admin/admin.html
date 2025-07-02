@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin | Emergy5</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
+
+  <!-- Iconify -->
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+</head>
+
+<body class="pt-24 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+  <!-- Header -->
+  <header class="fixed top-0 left-0 w-full bg-blue-600 text-white shadow z-50">
+    <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
+      <h1 class="text-xl font-semibold">Painel Admin</h1>
+      <div class="flex gap-3 items-center">
+        <button onclick="logout()"
+          class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500 px-4 py-2 rounded text-white font-medium">
+          Sair
+        </button>
+        <button id="toggleDark" aria-label="Alternar modo claro/escuro"
+          class="p-2 rounded hover:bg-white/20">
+          <iconify-icon icon="solar:moon-bold" class="text-2xl" id="themeIcon"></iconify-icon>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Conteúdo -->
+  <main class="max-w-5xl mx-auto px-4 space-y-8">
+    <div class="text-center">
+      <h2 class="text-3xl font-bold">Dashboard </h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-6">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow text-center">
+        <p class="text-lg font-semibold">Total de Leads</p>
+        <p class="text-3xl mt-2 font-bold text-blue-600 dark:text-blue-400" id="totalLeads">...</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow text-center">
+        <p class="text-lg font-semibold">Leads nas últimas 24h</p>
+        <p class="text-3xl mt-2 font-bold text-blue-600 dark:text-blue-400" id="leads24h">...</p>
+      </div>
+    </div>
+
+    <!-- Gráfico Leads -->
+    <section class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold text-center">Leads por Dia</h2>
+      <canvas id="chartLeads" height="180" role="img" aria-label="Gráfico de leads por dia"></canvas>
+    </section>
+<button onclick="window.location.href='leads.html'" class="bg-blue-600 px-4 py-2 rounded-xl text-white font-semibold justify center block mx-auto text-xl hover:bg-blue-700 
+transition-colors hover:scale-110 transition">Ver os leads</button>
+    <!-- Gráfico Taxa de Conversão -->
+    <section class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
+      <h2 class="text-xl font-semibold text-center">Taxa de Conversão (%)</h2>
+      <!-- Valor numérico da conversão -->
+      <p id="valorConversao" class="text-center text-3xl font-bold text-green-600 dark:text-green-400">...</p>
+      <canvas id="chartConversion" height="180" role="img" aria-label="Gráfico de conversão"></canvas>
+    </section>
+  </main>
+
+  <!-- Scripts -->
+  <script>
+    const toggleBtn = document.getElementById('toggleDark');
+    const htmlEl = document.documentElement;
+    const iconEl = document.getElementById('themeIcon');
+
+    (function applyThemeOnLoad() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        htmlEl.classList.add('dark');
+        iconEl.setAttribute('icon', 'solar:sun-bold');
+      } else {
+        iconEl.setAttribute('icon', 'solar:moon-bold');
+      }
+    })();
+
+    toggleBtn.addEventListener('click', async () => {
+      if (htmlEl.classList.contains('dark')) {
+        htmlEl.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        iconEl.setAttribute('icon', 'solar:moon-bold');
+      } else {
+        htmlEl.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        iconEl.setAttribute('icon', 'solar:sun-bold');
+      }
+      if (window.carregarDashboard) await window.carregarDashboard();
+      if (window.carregarTaxaConversao) await window.carregarTaxaConversao();
+    });
+  </script>
+
+  <!-- Módulos JavaScript: carregados após o HTML -->
+  <script type="module" src="./leads.js"></script>
+  <script type="module" src="./conversao.js"></script>
+</body>
+</html>
